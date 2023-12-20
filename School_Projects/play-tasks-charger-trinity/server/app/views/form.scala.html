@@ -1,0 +1,17 @@
+@()
+
+@main("Login") {
+    <h2>Login:</h2>
+    <form method="post" action="login">
+        username : <input type="text" name="username" id="user-login"></input>
+        password: <input type="password" name="password" id="pass-login"></input>
+        <input type="submit"></input>
+    </form>
+    <hr>
+    <h2>New User? Create an Account:</h2>
+    <form method="post" action="createLogin">
+        New username : <input type="text" name="username" id="user-create"></input>
+        New password: <input type="password" name="password" id="pass-create"></input>
+        <input type="submit"></input>
+    </form>
+}

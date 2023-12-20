@@ -1,0 +1,17 @@
+@()(implicit request: RequestHeader, flash: Flash)
+
+@main("Task 11") {
+  <input type="hidden" id="ws-route" value="@routes.Paint.socket.absoluteURL()">
+  <h2>Draw Something!</h2>
+  <canvas id="hi"></canvas>
+  <h4>Select a color: </h4>
+  <div id="black">Black</div>
+  <div id="red">Red</div>
+  <div id="orange">Orange</div>
+  <div id="yellow">Yellow</div>
+  <div id="green">Green</div>
+  <div id="blue">Blue</div>
+  <div id="purple">Purple</div>
+  <div id="rainbow">Rainbow!!</div>
+  
+}

@@ -1,0 +1,28 @@
+@(name: String, posts: List[(String, String)])
+
+@main("Logged In") {
+
+    <h2>Welcome, <em>@name</em></h2>
+    <h4>This website is a certified Cade Harger Creation©. </h4>
+    <hr></hr>
+    <h2>Posts:</h2>
+    <ul>
+        @for(post <- posts) {
+            <li>@post._1 : @post._2</li>
+            <li></li>
+        }
+    </ul>
+    <form method="get" action="newPost">
+        New Post : <input type="text" name="content" id="new-post"></input>
+        <input type="submit"></input>
+    </form>
+    <hr></hr>
+    <form method="get" action="viewMessages">
+        View messages with : <input type="text" name="view" id="view-messages"></input>
+        <input type="submit"></input>
+    </form>
+    <hr></hr>
+    <form method="get" action="logout">
+        <button type="submit" id="logout">Logout</buttom>
+    </form>
+}

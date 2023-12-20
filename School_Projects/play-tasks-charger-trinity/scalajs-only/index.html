@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Scala.js Dodgemop</title>
+    <link rel="stylesheet" type="text/css" href="./styles/task4.css">
+
+    <!-- Libraries for React -->
+    <!--<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>-->
+    <!--<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>-->
+  </head>
+    <body class='container'>
+        <div class='total'>
+            <canvas class='game' id="hi"></canvas>
+            <img id="mop" src="./src/main/resources/assets/task4_mop.jpg" style="display: none;"/>
+            <img id="bucket" src="./src/main/resources/assets/task4_bucket.webp" style="display: none;"/>
+            <script type="text/javascript" src="./target/scala-2.13/scalajs-only-fastopt.js"></script>
+            <div class="scoreboard">
+            <div class="score">
+                <div>Score:</div><div id='score'></div>
+            </div>
+            <div>
+                Don't get hit. Use arrow keys to move. Gets progressively harder. 
+            </div>
+            </div>
+        </div>
+        
+        </body>
+</html>

@@ -1,0 +1,19 @@
+@(sender: String, reciever: String, messages: List[(String, String)])
+
+@main("Messages") {
+
+    <h2>Messages with <em>@sender</em> and <em>@reciever</em></h2>
+    <ul>
+        @for(msg <- messages) {
+            <li>@msg._1 : @msg._2</li>
+            <li></li>
+        }
+    </ul>
+    <form method="post" action="newMessage">
+        New message : <input type="text" name="content" id="new-message"></input>
+        <input type="submit"></input>
+    </form>
+    <form method="get" action="home">
+        <button type="submit" id="go-back">Go Back</buttom>
+    </form>
+}

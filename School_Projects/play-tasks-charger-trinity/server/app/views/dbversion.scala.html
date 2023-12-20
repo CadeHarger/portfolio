@@ -1,0 +1,21 @@
+@()(implicit request: RequestHeader, flash: Flash)
+
+@main("dbversion") {
+  
+    <input type="hidden" id="csrfToken" value="@helper.CSRF.getToken.value">
+      
+    <input type="hidden" id="viewDms" value="@routes.DbMessage.viewDms()">
+    <input type="hidden" id="getConvo" value="@routes.DbMessage.getConvo()">
+    <input type="hidden" id="newMessage" value="@routes.DbMessage.newMessage()">
+    <input type="hidden" id="getUser" value="@routes.DbMessage.getUser()">
+    <input type="hidden" id="getPosts" value="@routes.DbMessage.getPosts()">
+    <input type="hidden" id="logout" value="@routes.DbMessage.logout()">
+    <input type="hidden" id="newPost" value="@routes.DbMessage.newPost()">
+    <input type="hidden" id="openDms" value="@routes.DbMessage.openDms()">
+    <input type="hidden" id="submitLogin" value="@routes.DbMessage.submitLogin()">
+    <input type="hidden" id="newUser" value="@routes.DbMessage.newUser()">
+    <input type="hidden" id="viewDms" value="@routes.DbMessage.viewDms()">
+    <div id="react-root">Hello</div>
+    <script type="module" src="@routes.Assets.versioned("javascript/messageRoot.js")"></script>
+
+}   

@@ -1,0 +1,30 @@
+
+.container {
+    background: #202020;
+    color: #CCCCCC;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.game {
+    width: 1000px;
+    height: 700px;
+    border: 1px solid #CCCCCC;
+}
+
+.total {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.scoreboard {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.score {
+    display: flex;
+    justify-content: space-between;
+}

@@ -1,0 +1,68 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET        /                             controllers.Application.index
+GET        /getform                      controllers.Application.getForm
+GET        /newPost                      controllers.Application.newPost(content)
+GET        /logout                       controllers.Application.logout
+GET        /viewMessages                 controllers.Application.viewMessages(view)
+GET        /home                         controllers.Application.goHome
+
+
++nocsrf
+POST        /createLogin                 controllers.Application.createLogin
++nocsrf
+POST        /login                       controllers.Application.handleLogin
++nocsrf
+POST        /newMessage                  controllers.Application.newMessage
+
+# Task 7
+GET         /lobby                       controllers.Lobby.index
+GET         /lobbySocket                 controllers.Lobby.socket
+
+# Task 8
+GET         /messageLogin                controllers.Rapp.load()
++nocsrf
+POST        /submitLogin                 controllers.Rapp.submitLogin()
++nocsrf
+POST        /newUser                     controllers.Rapp.newUser()
++nocsrf
+POST        /messageNewPost              controllers.Rapp.newPost()
++nocsrf
+POST        /messageNewMessage           controllers.Rapp.newMessage()
++nocsrf
+POST        /openDms                     controllers.Rapp.openDms()
+GET         /viewDms                     controllers.Rapp.viewDms()
+GET         /getPosts                    controllers.Rapp.getPosts()
+GET         /getUser                     controllers.Rapp.getUser()
+GET         /logout                      controllers.Rapp.logout()
+GET         /getConvo                    controllers.Rapp.getConvo()
+
+# Task 9
+
+GET         /messageLogin5                controllers.DbMessage.load()
++nocsrf
+POST        /submitLogin5                 controllers.DbMessage.submitLogin()
++nocsrf
+POST        /newUser5                     controllers.DbMessage.newUser()
++nocsrf
+POST        /messageNewPost5              controllers.DbMessage.newPost()
++nocsrf
+POST        /messageNewMessage5           controllers.DbMessage.newMessage()
++nocsrf
+POST        /openDms5                     controllers.DbMessage.openDms()
+GET         /viewDms5                     controllers.DbMessage.viewDms()
+GET         /getPosts5                    controllers.DbMessage.getPosts()
+GET         /getUser5                     controllers.DbMessage.getUser()
+GET         /logout5                      controllers.DbMessage.logout()
+GET         /getConvo5                    controllers.DbMessage.getConvo()
+
+# Task 11
+GET        /paint                         controllers.Paint.load
+GET        /getCanvasData                 controllers.Paint.socket
+
+# Prefix must match `play.assets.urlPrefix`
+GET        /assets/*file                 controllers.Assets.at(file)
+GET        /versionedAssets/*file        controllers.Assets.versioned(path="/public", file: Asset)

@@ -1,0 +1,22 @@
+@()(implicit request: RequestHeader, flash: Flash)
+
+@main("Lobby") {
+    <head>
+        <link rel="stylesheet" type="text/css" href="versionedAssets/stylesheets/task7.css">
+    </head> 
+    <input type="hidden" id="ws-route" value="@routes.Lobby.socket.absoluteURL()">
+    <div class="container">
+        <div class='total'>
+            <canvas class='game' id="game"></canvas>
+            <div class="scoreboard">
+                <div class="score">
+                <div>Welcome to the lobby.</div>
+                </div>
+                <div>
+                    Don't run into others. It's bad etiquette.
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="@routes.Assets.versioned("javascript/lobby.js")"></script>
+}
