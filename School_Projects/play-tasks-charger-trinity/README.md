@@ -32,7 +32,7 @@ Wrote a public and private message board that works locally with multiple users.
 ### Task 6 (Scala Play):
 Wrote a series of JUnit tests for task 5.
 
-[../server/test](../server/test)
+[./server/test](./server/test)
 
 ### Task 7 (Scala Play):
 Wrote a simple lobby for players to move around in, supporting multiple concurrent non-local users
