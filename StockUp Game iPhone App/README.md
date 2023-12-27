@@ -1,0 +1,7 @@
+### StockUp Game iPhone App
+
+This is an iPhone app that I made as a part of my high school's engineering program capstone project. I went above and beyond on the requirements simply out of my own interest in the project, teaching myself Swift and iPhone development and creating the app on my own. I learned a lot, as this was the biggest and most advanced project I had ever coded at the time. Looking back at it, some of the coding practices were not great, but I did very well for my experience level. I kept a blog of my progress during its creation [here](https://stockupgame.weebly.com/). Unfortunately, StockUp Game is no longer on the app store.
+
+The app has two modes. The first is a stock market portfolio that allows users to trade on $50,000 of virtual money on live, real stock market data. It did this using a scraper on Yahoo Finance, which was before I knew about APIs and their rules, which is why it isn't on the app store anymore. 
+
+The second is a stock market simulator that allows the user to trade on stocks from the past. There is no information about the stock on the user's screen except the graph of the stock. The user can then advance time, day by day, at their own will, trading accordingly. The purpose of this is to train the user to recognize patterns in the movement of the stock price, if any exist. 
