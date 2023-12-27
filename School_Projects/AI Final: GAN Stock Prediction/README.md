@@ -1,0 +1,3 @@
+# GAN Stock Prediction
+
+This was my final project for my Artificial Intelligence class, taught by Dr. Eva Tuba. My partner and I researched the potential of using GANs to model the distribution of stock outcomes. There is more depth in the research paper, but the idea is that we model the distribution of the stock price instead of just trying to model it directly, which might result in the averaging of outcomes, similar to blur in VAE or other MSE-loss based image generation models. Our research did not present any new findings, as the discriminator couldn't keep up. The generator tended to repeatedly generate outcomes shaped roughly the same. 
