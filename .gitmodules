@@ -1,6 +1,3 @@
-[submodule "GlassBrain"]
-	path = GlassBrain
-	url = https://github.com/CadeHarger/GlassBrain.git
 [submodule "School_Projects/WebApps Final Project"]
 	path = School_Projects/WebApps Final Project
 	url = https://github.com/aahmad09/ticketing.git
