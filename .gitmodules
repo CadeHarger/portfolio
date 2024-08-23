@@ -1,3 +1,6 @@
 [submodule "School_Projects/WebApps Final Project"]
 	path = School_Projects/WebApps Final Project
 	url = https://github.com/aahmad09/ticketing.git
+[submodule "School_Projects/Pet-Store-Website-CSCI-3321"]
+	path = School_Projects/Pet-Store-Website-CSCI-3321
+	url = https://github.com/jodonpacc/Pet-Store-Website-CSCI-3321
