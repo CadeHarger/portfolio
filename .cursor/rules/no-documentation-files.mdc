@@ -1,0 +1,23 @@
+---
+description: Never create .md or other documentation files unless explicitly requested by user
+alwaysApply: true
+---
+
+# Markdown File Creation Policy
+
+**NEVER create `.md`, `.txt`, or other documentation files unless the user explicitly asks for them.**
+
+This includes:
+- README.md files
+- Documentation files (*.md)
+- Any other markdown files
+
+## Exception
+
+it is okay to update project_schema.yaml proactively. 
+
+Only create `.md` files when the user explicitly requests:
+- "Create a README"
+- "Add a CONTRIBUTING.md file"
+- "Make a documentation file"
+- Or any other direct request for markdown files

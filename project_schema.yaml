@@ -1,0 +1,80 @@
+description: >
+  Schema for Cade Harger's personal portfolio website. This is a Vite + React + TypeScript
+  single-page app styled with Tailwind CSS v4. All content (resume data) lives in one central
+  file (src/data.ts) so updating the site is just a matter of editing that file. If you are an
+  AI agent making significant structural changes, please update this schema accordingly.
+
+index.html:
+  type: file
+  description: HTML entry point. Includes Inter font via Google Fonts and sets the page title/meta description.
+
+vite.config.ts:
+  type: file
+  description: Vite config with @vitejs/plugin-react and @tailwindcss/vite (Tailwind v4 plugin).
+
+src:
+  type: folder
+  children:
+    main.tsx:
+      type: file
+      description: React DOM entry point. Mounts <App /> into #root.
+
+    App.tsx:
+      type: file
+      description: Root component. Assembles Navbar, Hero, Experience, Projects, Skills, Education, and Footer with divider lines between sections.
+
+    index.css:
+      type: file
+      description: Global styles. Imports Tailwind v4 via `@import "tailwindcss"`. Sets html scroll-behavior smooth and body background/font.
+
+    data.ts:
+      type: file
+      description: >
+        Single source of truth for all portfolio content. Exports: nav (section labels),
+        experience (job history array), projects (project cards array), skills (categorized
+        skill tags object), certs (certifications array), and education (school/degree object).
+        Edit this file to update any displayed content without touching components.
+
+    components:
+      type: folder
+      description: One file per page section. All components are presentational and pull data from data.ts.
+      children:
+        Navbar.tsx:
+          type: file
+          description: Fixed top navbar with backdrop blur. Links to each section by id anchor. Includes a mailto contact button.
+
+        Hero.tsx:
+          type: file
+          description: Full-screen landing section with ambient glow divs, name/title headline, short bio, CTA button to #experience, and social icon links (GitHub, LinkedIn, email).
+
+        Experience.tsx:
+          type: file
+          description: Renders the experience array as a vertical stack of cards. Each card shows company, role, period, location, and a bullet list.
+
+        Projects.tsx:
+          type: file
+          description: Renders the projects array as a 3-column responsive grid. Each card shows name, subtitle, description, tech tags, and a highlight line.
+
+        Skills.tsx:
+          type: file
+          description: Renders the skills object as a 2-column grid of tag-cloud cards (one per category) plus a certifications row below.
+
+        Education.tsx:
+          type: file
+          description: Single card for the education object showing school, degree, period, location, and involvement list.
+
+        Footer.tsx:
+          type: file
+          description: Simple footer with name, location, email, GitHub, and LinkedIn links.
+
+public:
+  type: folder
+  description: Static assets served at root. Currently only contains the default Vite favicon.
+
+Personal_Projects:
+  type: folder
+  description: Legacy folder from the original git repo. Contains old project files; not part of the website.
+
+School_Projects:
+  type: folder
+  description: Legacy folder from the original git repo. Contains old academic project files; not part of the website.

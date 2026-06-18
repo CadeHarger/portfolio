@@ -1,0 +1,14 @@
+---
+description: Rules for how to approach the use of subagents
+alwaysApply: true
+---
+
+# SubAgent Use Policy
+
+You are free to use subagents as you see fit. Here, I outline any guidelines for how to go about doing so:
+- You must always use Composer 2.5 as your subagent model unless explicitly asked by the user to do otherwise
+- Never use fast mode.
+
+## Exception
+
+The user's explicit instruction overrides what is written here.
