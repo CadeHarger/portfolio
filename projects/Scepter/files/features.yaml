@@ -1,0 +1,664 @@
+File Description: This file describes the features of the product. This contains the business-level concepts
+that define the user experience. It should not include very technical details, such as function names
+
+
+Authentication:
+  Sign Up:
+    - User provides email, password (min 8 chars), display name, and a default organization name
+    - Password strength indicator shown during entry; confirm password validated before submit
+  Login:
+    - User provides email and password; session persists across page reloads via localStorage
+  Sign Out:
+    - Button in the sidebar footer; clears session immediately
+
+Project creation:
+  Describe: 
+  - There should be a form where the user names the project and describes in natural language what it is for, in as
+    much detail as they can. This will help fill in other context later in the pipeline.
+
+Initialize/Edit dataset:
+  Dataset initialization:
+    - When a user first visits the Add Data page for a project, a default dataset is
+      automatically created with the name "{project_slug}_data" (project name lowercased,
+      spaces replaced by underscores, non-alphanumeric characters removed, "_data" appended)
+    - If a dataset for the project already exists (e.g. on page refresh), the existing
+      dataset is loaded instead of creating a duplicate
+  Upload:
+    Source mode:
+      - The Upload tab has a two-button toggle at the top: "File Upload" (default) and "From Dataset"
+      - "File Upload" is the existing CSV/Excel import flow
+      - "From Dataset" lets the user select any other active dataset in the same project as the data source;
+        the rest of the wizard (column descriptions → column mapping → confirm → processing) is identical
+      - After choosing a source dataset and clicking "Continue to column descriptions", the system fetches
+        the source dataset's schema and sample values and advances to the Describe Columns step
+      - The confirm step dispatches a background merge_dataset job that reads rows directly from the source
+        dataset's DB records instead of a temp file
+    CSV/Excel:
+      File handling:
+        - Users can upload CSV or Excel (.xlsx, .xls) files via drag-and-drop or file browser
+        - If the same file (matching filename + hash) has been uploaded before to this dataset, cached column
+          metadata, descriptions, and mappings are returned so the user doesn't have to redo configuration
+        - The file is NOT stored permanently.
+      Sheet selection (Excel only, wizard step 2):
+        - After uploading an Excel (.xlsx/.xls) file, the wizard inserts a sheet selection step before column descriptions
+        - If the workbook has more than one sheet, the user sees a checklist of all sheets and selects which to import
+        - For each selected sheet the wizard presents heuristic-detected data regions (up to 3 candidates) one at a time,
+          each shown as a preview table with a progress badge ("Sheet N of M") and the note
+          "Is this the data you want? You can still select which columns to keep later."
+        - User clicks "Use this data" to confirm the current candidate or "Try next candidate" to cycle to the next region
+        - If all candidates are exhausted the user is shown guidance to reformat the data or create an Excel Table
+        - Once every selected sheet is confirmed the wizard advances to Column Descriptions (step 3 for Excel, step 2 for CSV)
+        - Excel uploads skip the file-hash cache; each upload always re-runs candidate detection
+      Column descriptions (wizard step 2 for CSV / step 3 for Excel):
+        - After upload, user sees each parsed column with its inferred datatype and 2 non-null sample values
+        - Low-cardinality datatype inference is ratio-based after value normalization, so repeated text labels
+          such as countries can route to categorical even when there are more than 30 distinct values
+        - For each column, the user writes a short 1-2 sentence description of what the column contains
+        - Alternatively, the user can click "Infer" per column or "Infer All" to have an LLM generate
+          descriptions automatically using the column title, project description, dataset description,
+          and 2 non-null sample values as context
+        - A third option, "Upload File with Descriptions", allows the user to upload a description document
+          (.txt, .pdf, or .docx) such as a data dictionary or schema README.
+        - User can set each column as describer or target via toggles
+        - User can override the inferred datatype via a dropdown of valid datatypes
+      Column mapping:
+        - The mapping step is always shown so the user can review or edit mappings before merging.
+        - Default mode is "Automatic" where an LLM semantically matches uploaded columns to existing
+          dataset columns. For new/empty datasets there's nothing to match against, so identity
+          mappings are pre-filled (every source column becomes a new column) without any LLM call.
+        - A "Manual" (Advanced) mode allows the user to manually map each source column to a target
+          column (or mark it as a new column) without LLM involvement. Available even for empty
+          datasets so the user can rename columns or combine sources before merge.
+        - Before merging, a confirmation screen shows all proposed mappings: source column -> target column,
+          with the LLM's reasoning for each match
+        - Users can manually fix any mapping in the confirmation view via dropdowns
+        - Users can cancel (discard upload), or click "Ask AI to Fix" with a text description of what's
+          wrong. This re-runs the LLM column matching with the user's feedback as additional context.
+        - A warning is shown that the merge cannot be undone before the user confirms
+      Export (backup):
+        - On the mapping confirmation screen, a small download icon button opens the Export Dialog
+        - Allows the user to export the column mapping configuration as a backup before merging,
+          in case of issues. Data sheet contains the source→target column mappings; metadata sheet
+          contains inferred column types, descriptions, and sample values
+      Merge execution:
+        - If merging fails at any point, changes are automatically rolled back to a backup copy
+      Processing screen:
+        - After confirming, a loading screen appears showing job progress
+        - The user can navigate away from this screen freely
+        - When the user navigates back to the dataset they submitted to, the processing screen
+          re-appears until the merge has finished
+  Discover:
+    Overview:
+      - The Discover tab agentically finds new rows to add to the dataset (and optionally extra
+        columns alongside those rows). Unlike Define and Strategize, it adds rows — not just column
+        values for existing rows. It is grouped with Upload under "Rows + Columns" on the Add Data page.
+      - The system searches multiple data sources in sequence (public datasets, known APIs, structured
+        sites) and stops once the row goal is met. Rows already in the dataset are deduplicated using
+        describer columns.
+    Setup (idle form):
+      - Empty dataset: user describes what each row represents in natural language and defines
+        describer columns (name, datatype, description) that uniquely identify a row. An "Infer
+        describers" button calls the LLM to propose describer columns from the row description.
+      - Existing dataset: describer columns are read from the dataset; user can also edit the row
+        description (pre-filled from dataset row_description or overview description metadata).
+        If none are marked, the user can click "Infer describer columns" to have the LLM flag
+        appropriate columns from the schema.
+      - Row description is persisted on the dataset so it survives page reloads.
+      - User sets a row limit (1–1000) or checks "Collect all available rows" to fetch everything
+        the sources provide (up to a high backend cap).
+      - Optional date range (after/before) filters search results to data published in that window.
+      - "Collect extra columns" toggle (on by default) surfaces additional fields found alongside
+        each entity (e.g. genre, release year) as optional bonus columns.
+    Discovery phase (searching):
+      - Clicking "Start Discovery" immediately shows the shared job progress screen (same
+        component as Upload merge): stage pills (Datasets → APIs → Web → Finish), percent bar,
+        live backend status messages, stall warning after ~90s with reload, background-run
+        callout, and Cancel discovery. Progress continues through job submission and the full
+        discover_rows run until the confirmation table appears.
+    Confirmation phase:
+      - User sees a table of found rows (first 100 shown, with a count if more) with checkboxes to
+        select which rows to merge. All rows are selected by default; select/deselect all controls
+        are available.
+      - Rows that matched existing describer tuples are filtered out; the count of filtered duplicates
+        is shown.
+      - If bonus columns were collected, a side panel lists each extra column with datatype,
+        coverage percentage, description, and a toggle to include it.
+      - Clicking "Revise" resets to the idle form to change parameters and re-run.
+      - If no bonus columns are accepted, "Confirm & Merge" submits directly; otherwise "Next: Map
+        Columns" advances to the mapping step.
+      - On a blank dataset with no bonus columns found, rows merge automatically after discovery
+        completes (all rows are selected by default); the confirmation table is skipped.
+    Column mapping (bonus columns only):
+      - When the user accepted one or more bonus columns, an LLM semantically maps each discovered
+        column to an existing dataset column or a new column, with reasoning shown per mapping.
+      - The user can override target column and datatype before confirming.
+    Merge phase:
+      - Clicking "Confirm & Merge" submits a confirm_discover_rows background job that inserts
+        accepted rows (and any accepted bonus columns) into the dataset, creating new columns as needed.
+      - A loading screen streams merge progress; the user can navigate away while it runs.
+      - Completing the merge creates a dataset history checkpoint ("discover-row merge").
+    Done phase:
+      - Shows the shared merge-success panel (same component as Upload merge) with
+        aria-live announcement and keyboard focus; includes a View dataset link that
+        moves focus to the row-count badge on the Dataset tab.
+      - Add Data page header row-count badge also announces when the dataset size changes.
+      - If duplicates were filtered during discovery, a note shows how many were found.
+      - If the row goal was not fully met, LLM feedback from the discovery run is shown.
+      - Start new search resets the wizard for another discovery run.
+  Define:
+    Overview:
+      - User provides a natural-language description of a new column to add to the dataset
+      - The AI retrieves or derives that value for every row in parallel
+      - User can submit multiple define jobs simultaneously; each job is tracked independently
+    Column naming:
+      - A slug is auto-generated from the description (e.g. "Director win rate last 5 years" → "director_win_rate_last_5_years")
+      - The user can override the auto-generated name before submitting
+    Job tracking:
+      - Each submitted job shows a real-time progress bar and status message 
+      - Jobs persist in the UI across tab switches within the session
+      - The user can navigate away freely; jobs continue running in the background
+  Strategize:
+    Overview:
+      - User describes the prediction objective in natural language, or clicks "Infer" to have the
+        LLM infer the objective automatically from existing dataset columns, project description,
+        and dataset description
+      - User selects a discovery budget (Minimal → Exhaustive) which controls how many predictor
+        columns the AI will suggest (3–15)
+    Discovery phase (loading screen):
+      - Clicking "Generate Strategy Plan" submits a background job
+      - A loading screen appears with a progress bar tracking the job
+      - The user can navigate away; the loading screen reappears when they return to the dataset
+        if the discovery job is still running
+    Confirmation phase:
+      - Once discovery completes, the user sees a list of suggested predictor columns sorted by
+        importance score, each with its name, datatype, importance rating (1–10), and description
+      - The LLM generates only predictor definitions (name, description, datatype, importance);
+        it does NOT generate Exa queries — data collection queries are handled by the backend
+      - High-importance columns (score ≥ 7) are badged "high signal"
+      - The user can expand any column to see its full description
+      - The user can delete individual columns they don't want
+      - A rough cost estimate is shown (~$0.007/row/col) based on how many columns
+        remain and how many rows are in the dataset
+      - Clicking "Revise" resets to the idle form so the user can change the objective or budget
+        and re-run discovery
+    Collection phase:
+      - Clicking "Confirm & Collect" submits a SINGLE aggregate_dataset job with
+        strategize_batch=true containing all selected predictor columns
+      - The backend collects all columns in one iterative batch: each pass of the universal
+        collection pipeline targets ALL remaining unfilled columns at once, so data found for
+        one predictor automatically fills other predictors in the same pass
+      - Iteration continues until every cell is filled or the pipeline makes no further progress
+        (avoids re-doing work already done on earlier passes)
+      - While the job runs the UI shows overall progress and per-column status rows; once done
+        per-column row counts are shown from the job result
+      - The user can navigate away; on return the collecting phase is restored from the active
+        aggregate_dataset strategize_batch job on the backend
+      - Once the job reaches a terminal state (completed/failed), the wizard transitions to "done"
+    Done phase:
+      - Shows a completion summary with the number of columns populated
+      - Start new plan resets the wizard to idle so the user can run another strategy
+
+Cost Plan:
+  Three record types:
+    - Internal estimate: computed before execution using real provider costs (Exa, LLM tokens).
+      Stored internally. TRADE SECRET — never exposed via API.
+    - External estimate: computed before execution using fixed per-row rates by collection category. 
+      User-facing via API.
+    - Actual: harvested from CostTracker after job completion.
+      Both real costs and what user was charged are written.
+  Four collection categories (user-facing):
+    - user_provided_parsed: user gave us a file, we parsed it (free)
+    - user_provided_scraped: user gave us a URL, we scraped it
+    - us_collected_parsed: we searched and structured data via our APIs
+    - us_collected_scraped: we searched and scraped data via our APIs
+
+Dataset selection:
+  Overview:
+    - A custom dropdown in the sidebar (below the project name) lets the user choose which
+      dataset they are working with across all project pages
+    - The selector is only shown when inside a project and at least one dataset exists
+    - Each option in the dropdown displays the dataset name, row count, column count, and
+      the start of the dataset description (if present)
+    - The selected dataset is stored in Redux (activeDatasetId) and persists as the user
+      navigates between Add Data, Dataset, Training, Predictions, History, and other pages
+    - Changing the selected dataset immediately updates: the dataset view, the training
+      models list (filtered to models trained on that dataset), and the predictions model
+      list (same filter)
+    - The old inline dataset selector on the Dataset view page has been removed in favor
+      of this sidebar selector
+
+Dataset history:
+  Overview:
+    - Git-style linear version history for dataset data only (rows, columns, and cells).
+      Does not version dataset name/description metadata, training runs, or predictions.
+    - Each user-facing data change creates a checkpoint in a single timeline per dataset.
+    - Checkpoints are created for: individual cell edits, column add/update/delete, and
+      completed background jobs (file merge, discover-row merge, define column, strategize
+      batch collection).
+  Navigation:
+    - History lives in a secondary "More" section at the bottom of the project sidebar
+      (below the main workflow pages: Add Data, Dataset, Training, etc.)
+    - Requires data_viewer permission or higher
+    - Uses the dataset currently selected in the sidebar dataset selector
+  History page:
+    - Timeline of checkpoints, newest first, each showing a short summary, change type,
+      sequence number, and timestamp
+    - HEAD marks the checkpoint the dataset is currently positioned at; future checkpoints
+      (ahead of HEAD) are labeled as available for redo
+    - Clicking "Restore" on any checkpoint navigates the live dataset back to that point
+      (checkout) without deleting later checkpoints
+    - "Redo" button advances one checkpoint forward when viewing an earlier version
+    - Status bar on the History page explains when the user is viewing an older checkpoint
+      and how many newer checkpoints exist
+  Detached state (viewing the past):
+    - After restoring to an earlier checkpoint, a banner appears at the top of all
+      project pages (Dataset, Add Data, etc.) indicating the user is viewing an earlier
+      version, with Redo and a link to the History page
+    - The user can browse and redo without making changes; no data is lost
+  Editing while detached:
+    - If the user tries to save a data change while positioned behind the latest
+      checkpoint (e.g. editing a cell or deleting a column), a confirmation dialog warns
+      that continuing will permanently discard all newer checkpoints
+    - Cancel keeps the user on the older view with redo still available
+    - Confirm applies the change, truncates all checkpoints after HEAD, and records the
+      new change as the latest checkpoint
+    - Background jobs started while detached automatically discard future checkpoints
+      before running (same effect as confirming truncate)
+
+Dataset view:
+  Overview:
+    - Displays the live dataset from the backend (reflects the current history HEAD,
+      which may be an earlier checkpoint if the user has restored to one)
+  Toolbar controls:
+    - Minimal Excel-like controls at the top of the page
+    - View / Edit mode toggle (segmented button):
+        View mode (default): table cells are read-only; editing is only possible from the detail panel on the right
+        Edit mode: double-clicking any cell opens an inline editor; changes are persisted immediately to the backend
+    - Global search input: searches across all cell values
+    - Filter button: opens a filter bar to select a column and enter a value; active filter shown as a dismissible pill
+    - Column visibility toggle: show/hide individual columns
+    - Clear sort button: appears when a sort is active
+  Sorting and filtering:
+    - Clicking a column header toggles sort ascending → descending → off
+  Column names:
+    - Displayed in their original casing (not uppercased)
+  Column order:
+    - Non-describer columns appear alphabetically (left); describer columns appear
+      alphabetically at the right edge of the data columns (before the row actions column)
+  Cell types:
+    - Each datatype from the backend has its own display and edit component
+    - Float/number values are displayed rounded to 4 decimal places; editing always exposes the full precision value
+  Detail panel (row focus):
+    - Fixed to the right edge of the viewport so it remains visible even when the table is scrolled horizontally
+    - Table area gains matching padding-right when the panel is open
+    - Clicking a row opens a slide-in panel showing all column values
+    - Long text values are height-limited (scrollable) in display mode so the panel doesn't grow unbounded
+    - Uses expanded cell renderers for full content in edit mode
+    - Each field has a hover-revealed copy icon button that copies the cell's text value to the clipboard
+    - In View mode: each field has a hover-revealed edit icon; clicking it opens an inline
+      editor for that field and saves the value to the backend on confirm
+    - In Edit mode: same per-field editing available
+  Export:
+    - A download icon button in the dataset page header opens the Export Dialog
+    - Data sheet: all rows with their column values
+    - Metadata sheet: column definitions (name, type, is_describer, is_target, description)
+    Export Dialog (shared component used across the app):
+      Format options:
+        - CSV: downloads two separate files — <filename>_data.csv and <filename>_metadata.csv
+        - Excel: downloads one .xlsx workbook with a "Data" sheet and a "Metadata" sheet
+      Options:
+        - Filename: text input pre-filled with a sensible default
+        - Include metadata: toggle (default on) to include/exclude the metadata sheet/file
+ 
+Training:
+  Initialize training run:
+    - User selects the target column, sets a run name, and configures training
+      parameters (epochs, learning rate, batch size, validation split, loss function)
+    - User can select which feature columns to include in training via a checkbox
+      grid (defaults to all non-target, non-describer columns). The count of
+      selected vs total columns is shown. This selection is reflected in both the
+      cost estimate and the training job, and controls which columns are evaluated
+      during the preprocessing (eval) phase.
+    - Categorical output column handling: when the selected target column is categorical
+      (one_hot or multi_hot head kind), clicking "Start Training" opens a modal asking
+      how to handle low-frequency categories:
+        1. Drop categories below a count threshold (user enters a number, default 10)
+        2. Keep all categories regardless of frequency
+      The modal shows a live-updating preview of how many classes will be kept or
+      dropped at the chosen threshold. The selected setting is passed to the training
+      job as preprocessing_override.min_count (1 = keep all, N = drop rares below N).
+  Validation Strategy (Epic 6):
+    - "Validation Strategy" toggle in the Training Parameters section: "Single Split"
+      (default) or "K-Fold CV"
+    - Single Split: shows a "Validation Split" percentage field (default 20%), which
+      controls the holdout fraction used to compute training-curve val metrics
+    - K-Fold CV: replaces the split percentage with a "Number of Folds" input (default 5,
+      min 2, max 20). Stratified folds are used automatically for classification targets
+      (one_hot / multi_hot) to preserve class distribution across folds
+    - K-Fold execution: runs N full training passes on complementary data splits, then
+      trains a final model on all data for prediction; fold metrics are aggregated (mean ± std)
+    - K-Fold metrics view: "Cross-Validation Results" section in the model details Overview
+      tab shows a table of mean ± std dev ± 95% CI per metric, with an expandable per-fold
+      breakdown table
+  Pause / Resume:
+    - User can cooperatively pause a training run; the pause takes effect after the
+      current batch finishes (not epoch), minimising wasted compute
+  Cost Estimate:
+    - Shown on the "New Run" tab before the user starts training
+    - Uses the same Cost Plan breakdown structure as data collection
+    - Evaluation line items show "Cached" (tooltip: already run, $0) or "Partial"
+      (strikethrough original cost, reduced cost for stale cells only)
+    - Training compute is a separate line item calculated from epochs × rows ×
+      feature dimensionality
+    - If the estimate job does not complete within 45 seconds, a timeout error is shown
+  Training result view:
+    - Live progress bar and log panel updated during the run via a fetch()-based SSE
+      stream (not EventSource, which cannot send auth headers)
+    - Reloading the page while a run is active reattaches to the in-flight job (via
+      GET /api/jobs) and switches to the New Run tab so progress and controls remain visible
+    - Pause, Resume, Cancel, and New Run buttons;
+    - Manual mode only: optional "Max training rows (testing)" caps how many rows are used for
+      training via a random sample; evaluation runs on that same sample and writes normal eval cells
+      so a later full-dataset run reuses cached text-column results for already-evaluated rows;
+    - "Training Paused" banner when applicable; error banner on failure with a specific
+      message for connection errors, HTTP errors, and mid-stream disconnects
+  Model management view:
+    - List of trained models with add / delete actions
+    - Click a model to open its detail panel
+  Model details:
+    Overview tab:
+      Metric selector:
+        - Color-coded checkboxes listing all metrics available for the model
+        - User selects which metrics to display; defaults to Val Loss, MAE, MSE
+      Metric cards:
+        - One card per selected metric showing the final validation value
+        - Cards with both train and val values show both (e.g. train: x below the main val value)
+        - Always includes a Train / Val row-count card
+      Validation metric curves:
+        - Line chart with one line per selected metric that has per-checkpoint history data
+      Feature importances:
+        - Bar chart of weight-magnitude importances (first hidden layer), sorted descending
+        - Permutation Importance section (Epic 9): bar chart of validation-set metric degradation
+          per feature, computed during training via compute_permutation_importance in
+          services/explainability.py. Stored in model.metrics["permutation_importances"] and
+          surfaced via GET /models/:id/metrics. If the model predates Epic 9, shows an
+          "Available on next retrain" placeholder card instead.
+      Classification metrics (one_hot / multi_hot targets only):
+        - Grid of stat cards showing: Accuracy, Top-3 Accuracy, Top-5 Accuracy, Macro F1,
+          Macro Precision, Macro Recall, Cohen's Kappa, Log Loss
+        - Accuracy and top-K values shown as percentages; kappa and log-loss as decimals
+      Confusion matrix (one_hot / multi_hot targets only):
+        - Color-coded table of actual vs predicted class counts, capped at 15 most-frequent
+          classes; diagonal (correct predictions) is indigo-tinted; off-diagonal errors are
+          red-tinted by intensity
+      Calibration:
+        - ECE (Expected Calibration Error) stat card and mean prediction entropy card
+        - Reliability diagram — bar chart of actual accuracy per confidence bucket with a
+          dashed perfect-calibration reference line; shows whether the model is over- or
+          under-confident (classification only; numeric models show entropy card only)
+      Training parameters:
+        - Grid of hyperparameter key/value pairs used for the run
+    Training Curve tab:
+      - Train loss and validation loss plotted over checkpoints
+    Integration tab:
+      - Model ID with show/hide and copy controls
+      - Python code snippet for API usage
+  Multi-Model Architecture Search (Epic 3):
+    Model Families:
+      - Three model families available: MLP Neural Net (generic_many_column), XGBoost (xgboost),
+        Linear Baseline (baseline_linear — LogisticRegression for classification, Ridge for regression)
+      - Checkboxes in "Model Families" section of New Run tab; default is MLP only to preserve
+        existing behavior
+      - "Recommend" button calls GET /datasets/:id/recommend-model-families?target_column=...
+        which applies heuristic rules based on dataset size bucket and health score:
+          - small → all three families
+          - medium + health ≥ 70 → XGBoost + MLP
+          - medium + health < 70 → all three
+          - large → XGBoost + MLP
+        LLM-guided recommendation is toggled via training_config.json key "llm_model_recommendation"
+        (default: false). The /recommend-model-families endpoint's ?llm_enabled= query param overrides
+        the config for a single request. When off, the deterministic heuristic (size × health) is used.
+      - Reasoning text shown below the Recommend button after recommendation
+    Batch Training:
+      - When multiple families are selected, a single job fans out to train each family
+        sequentially against the same shared train/val split (same split_seed)
+      - Button label changes to "Compare N Models" when > 1 family selected
+      - Each family produces its own TrainedModel record with model_type set to the family name
+      - Best model selected by val_primary_metric after all families complete
+    Compare Tab:
+      - Third tab in TrainingPage alongside Models and New Run
+      - Left panel: checkbox list of all trained models for the active dataset
+      - Right panel: side-by-side metric table — one column per selected model, one row per metric
+      - Best value per metric row highlighted in green; lower-is-better detection based on metric name
+    Manual ensemble (multi-family):
+      - When two or more model families are selected in Manual mode, a "Train ensemble" checkbox
+        (default on) sends build_ensemble in the training job config
+      - With build_ensemble on: trains each family, blends them via services/ensemble.py (equal,
+        loss-weighted, or stacked), and keeps every family model plus the ensemble in the Models list
+      - With build_ensemble off: trains each family, picks the best by the chosen comparison metric,
+        and prunes the rest (no ensemble)
+      - "Best Model By" metric chips still select the run winner for the completion banner
+    Automatic Ensembling (HPO / legacy arch search):
+      - HPO post-processing always attempts an ensemble from best-per-family trial winners, then
+        prunes to a single final winner unless build_ensemble is used on manual runs (see above)
+      - Three strategies tried: equal-weight blend, loss-weighted blend (1/val_CE_loss), stacking
+        (LogisticRegression / Ridge meta-learner on concatenated PMF features; requires ≥15 val rows)
+
+  Automated Hyperparameter Optimisation (Epic 4):
+    Overview:
+      - New "Auto-tune" mode toggle in the New Run tab sits above the training parameters section
+      - In Auto-tune mode, manual hyperparameter fields are replaced with budget controls:
+          Trials (n_trials, default 20), Timeout (timeout_seconds, default 1800), Metric name
+      - Submits a tune_model job instead of train_model; requires model_editor permission
+    HPO Engine:
+      - Backed by Optuna (TPESampler + MedianPruner); graceful fallback to random search if
+        Optuna is unavailable or training_config.hpo_strategy == "random_fallback"
+      - Search spaces per family:
+          MLP: lr (log), batch_size (categorical), epochs, hidden_dim (categorical), scalar_weight,
+               early_stopping_patience, lr_reduce_patience, lr_reduce_factor
+          XGBoost: n_estimators, max_depth, learning_rate (log), subsample, colsample_bytree, early_stopping_rounds
+          baseline_linear: C (log), alpha (log), max_iter (categorical)
+      - Metric direction inferred from name: lower-is-better for loss/mae/mse/rmse/error; higher otherwise
+      - Optional LLM warm-start: first trial uses LLM-suggested params when hpo_llm_suggestions_enabled=true
+    Config (training_config.json):
+      - hpo_enabled (bool, default true)
+      - hpo_strategy ("optuna" | "random_fallback", default "optuna")
+      - hpo_default_trials (int, default 20)
+      - hpo_timeout_seconds (int, default 1800; 0 = unlimited)
+      - hpo_pruner ("median" | "none", default "median")
+      - hpo_llm_suggestions_enabled (bool, default false)
+    Progress:
+      - SSE stream mirrors the training stream pattern: trial-by-trial progress messages with pct
+      - Final message reports best trial ID and metric value
+    Results:
+      - Trial results table in the UI: trial #, family, status badge, metric value, duration, View link
+      - Best trial highlighted with a star badge; "View Predictions" button points at best_model_id
+      - All trial models are persisted as TrainedModel records tagged with the tune_model job_id
+
+Prediction View:
+  Overview:
+    - Displays predictions from a trained model alongside the original dataset rows
+    - Model selector dropdown in the header filters to models trained on the active dataset;
+      auto-selects the first available model on load
+    - Row count badge and "Export All" button in the header
+    - Global search input filters across all visible cell values
+  Table:
+    - Columns: row number (#), describer columns (e.g. movie title), optional actual target
+      column if the dataset has ground-truth values, predicted score, and an expand toggle
+    - Describer columns are sourced from DatasetColumn.is_describer flags; the table is
+      built dynamically so any number of describer columns are shown
+    - Predicted score column is color-coded (green = high ≥75, amber = medium ≥50, red = low)
+      with an inline mini bar chart
+    - Actual target column (when present) uses the same color coding as predicted
+    - Clicking any row or the expand icon opens the detail panel on the right
+    - Rows are sortable by any column; default sort is predicted score descending
+  Detail panel (row focus):
+    - Slides in from the right when a row is selected; dismissed with the X button
+    - Header shows the value of the first describer column (e.g. movie title) as the title,
+      or "Row N" if no describer columns exist; subtitle shows row number and model ID prefix
+    - Score hero: predicted score with High/Medium/Low badge; if ground truth is available,
+      actual score is shown alongside it with a ±diff indicator
+      - Describer fields section: key/value list of all describer column values (only rendered
+        when at least one describer column exists)
+    - Output distribution chart: area chart of the raw 100-element output tensor (x = score
+      index 0–99, y = activation); a dashed vertical line marks the predicted score; if an
+      actual score is available a second reference line marks it
+    - Feature Attribution (Epic 9): waterfall bar chart of per-feature Integrated Gradients
+      attributions; fetched lazily from GET /models/:id/explanation/:rowKey when the panel opens.
+      Blue bars = features that pushed the score up; red bars = features that pushed it down.
+      Shows a loading spinner while fetching and an error message on failure.
+    - Prediction Explanation (Epic 9): LLM-generated 2–3 sentence plain-English explanation of
+      why the model gave this row its predicted score, grounded in the specific attribution
+      drivers. Fetched from the same explanation endpoint as the waterfall chart. Empty when
+      the LLM is unavailable.
+    - Export Row button in the panel footer
+
+Pipeline Review:
+  Overview:
+    - Persistent pipeline panel at the top shows a health-score bar and a 3-step flow
+      diagram: Data → Modeling → Deployment. Clicking a step reveals a detailed subpage
+      below; clicking the same step again collapses it back to the Overview.
+  Overview state (no step selected):
+    - When the user is a Project Manager: a Dataset Cost card shows the active dataset name,
+      estimated vs actual spend, and a per-category breakdown table
+    - Below the cost card (or always for non-PMs): four analysis cards — Weaknesses,
+      Bias & Data Leaks, Cost Opportunities, Recommendations — with severity-coded bullets.
+  Data step:
+    - Summary stat row: Total Rows, Total Columns, Avg Missing %.
+    - Missing Data card: overall null-% hero number (color-coded), top-3 columns by null %.
+      Statistics
+    - Data Source Quality card: weighted-average reliability / integrity / quality scores
+      per source type; sources derived from column aggregator configs. user_uploaded = 100%,
+      collected = 80% baseline; extensible per-source scoring without touching the
+      weighted-average logic.
+    - Columns with Issues: lists columns with < 50% non-null cells.
+    - Data Leakage Risk: placeholder 0% with four detection-signal checks.
+  Modeling step:
+    - Homoscedasticity: scatter plot (residuals vs predicted) + Breusch-Pagan p-value for
+      numeric targets; Pearson-residual bar chart + overdispersion ratio for categorical.
+    - Normality of Errors: residual histogram + Shapiro-Wilk W/p-value (numeric only).
+    - Multicollinearity: scrollable correlation heatmap for all non-target feature columns.
+  Deployment step:
+    - Placeholder key/value detail grid.
+
+Optimize:
+  - Allow the user to select columns that are "influenceable" in the real world, and specify an objective target
+  - Two optimizer modes, automatically selected by model type:
+      gradient  — GenericManyColumnModel (MLP): Adam gradient descent over trainable input deltas.
+      discrete  — XGBoost, baseline_linear: greedy coordinate-descent that sweeps candidate values
+                  per mutable column and greedily picks the best each round (up to N rounds).
+    Ensemble, legacy "many_column", and other types are explicitly unsupported; the UI shows a clear
+    explanation and suggests training an MLP or XGBoost model instead.
+  - The /optimize/context endpoint returns capability metadata (optimize_supported, optimize_mode,
+    unsupported_reason) for every model type, so the frontend can gate the config panel before any
+    compute is attempted.
+  - Eligible mutable inputs: boolean, number, raw_number, categorical, list_categorical.
+    Ineligible with specific reasons: date (temporal), duration (temporal), __interaction__* (derived/synthetic),
+    text / url / json / id (no inline encoder).
+  - Sample/optimize the selected column values on the user's trained model to optimize the training objective to reach the target
+  - Provide an overview/report of what inputs to change and how much, make it easily exportable for business users (include margins of error)
+  - run_predict and run_optimize dispatch to the gradient or discrete path based on model type;
+    truly unsupported types raise ValueError before any artifact IO is attempted (_assert_optimizable).
+
+Settings:
+  Permissions:
+    Overview:
+      - Accessible via the gear icon in the sidebar footer at /settings/permissions
+      - Two sections: Organizations and Projects
+    Organization permissions (org-wide roles):
+      - none: regular member, no elevated org rights
+      - org_manager: can assign Project Manager permissions and create/delete projects
+      - org_admin: all org_manager rights + can manage org_managers/org_admins
+      - Whoever creates an org (including the personal org created at registration) becomes org_admin
+    Project permissions (per-project, principle of least privilege):
+      - data_role: none | viewer | editor
+          data_viewer: can view datasets, dataset view page, History page, Add Data page (read only)
+          data_editor: can edit datasets, restore/redo history, use Define/Strategize/Discover/Upload, delete columns
+      - model_role: none | viewer | editor
+          model_viewer: can view trained models and predictions
+          model_editor: can train, pause, resume, cancel, and delete models
+      - is_pm (Project Manager): can assign who has what permissions in the project.
+          Also inherently has data_editor + model_editor capabilities.
+      - Only those with both data_viewer AND model_viewer or higher can see the Predictions
+        and Pipeline pages in the sidebar
+      - Whoever creates a project becomes the project manager by default
+    Org management:
+      - Org admins and managers can add/remove users from the organization
+      - Assigning org_admin requires being an org_admin yourself
+      - The last org_admin cannot be removed or demoted
+    Project management:
+      - PMs can add/remove users and adjust per-project permissions (data_role, model_role, is_pm)
+      - The last PM cannot be removed or demoted
+  Billing:
+    - Accessible at /settings/billing
+    - Org admins can toggle "billing_centralized" per organization
+    - When billing is centralized in an org, any project member or PM who navigates to
+      Billing sees: "Billing has been centralized to your organization. Speak to an
+      organization manager if you have any questions or comments."
+    - Org managers and admins see a toggle to centralize/decentralize billing
+  Usage:
+    - Accessible at /settings/usage
+    - Scope selector: My Usage (default), Project (requires is_pm), or Organization (requires org_manager/org_admin)
+    - Date range filter: 1d / 7d / 30d buttons (default 30d)
+    - Summary stat cards: total spend, total jobs, tool count
+    - Stacked area chart: cumulative spend over the selected date range broken down by job type;
+      custom tooltip shows per-job-type breakdown and total per day
+    - Usage instances table: rows showing Date, Tool, Project, Status, and Cost per job;
+      "Free' shown for zero-cost jobs; costs sourced from actual external cost records with fallback to credit transaction debits
+    - Export CSV button downloads the usage instances table as a CSV file
+  Account:
+    - Placeholder; will allow updating display name, email, and password
+  Display:
+    - Placeholder; will allow theme and visual preference customization
+
+AutoML Dataset Profiling:
+  Overview:
+    - Automated dataset profiling runs during evaluation and computes column-level
+      and dataset-level quality signals similar to AutoML systems
+    - Profile is cached in dataset metadata and is always available without re-scanning
+  Column signals:
+    - is_constant: column has only one unique value (adds no predictive signal)
+    - is_near_constant: over 98% of non-null values are the same
+    - is_likely_id: high unique ratio (≥95%) and ID-like column name (e.g. movie_id) or id datatype
+    - is_high_cardinality: categorical column with unique ratio ≥ 50% and more than 20 unique values
+    - is_temporal: column has a date/duration datatype or temporal keyword in name (created_at, timestamp, etc.)
+  Dataset-level signals:
+    - size_bucket: 'small' (< 500 rows), 'medium' (< 10,000), 'large' (≥ 10,000)
+    - avg_null_pct: average missingness across all columns
+    - duplicate_column_groups: groups of columns with identical cell values (only computed for ≤ 5,000 rows)
+    - temporal_columns: list of all column names with temporal signals
+    - excluded_recommendations: feature columns recommended for removal (constant, likely-ID, or >90% null)
+    - health_score (0–100): pre-training data quality score with deductions for small datasets,
+      high missingness, constant columns, likely-ID columns, duplicate groups, sparse columns,
+      and target class imbalance
+    - health_warnings: human-readable list of issues contributing to the health score
+  Target class imbalance (categorical targets only):
+    - majority_share / minority_share: fraction of samples belonging to the most/least common class
+    - imbalance_ratio: majority count / minority count (1.0 = perfectly balanced)
+    - rare_class_count: number of classes with fewer than 5 samples
+    - imbalance_severity: 'ok' / 'warn' (majority > 80%) / 'high' (majority > 95%)
+  API:
+    - GET /projects/:pid/datasets/:did/profile — returns full DatasetProfileResponse
+    - ?recompute=true forces a fresh computation, bypassing the cache
+    - If no profile exists (not yet evaluated), computed on-the-fly and cached
+    - Cached profiles are invalidated after upload/merge and auto-recomputed when the dataset
+      history head changes or the live row count no longer matches the cache
+  Training UI (DatasetHealthPanel):
+    - Shown in the Training page New Run tab between TargetPreviewSection and Feature Columns
+    - Displays: health score with color coding (green ≥ 80, amber ≥ 55, red < 55), size bucket badge
+    - Lists flagged feature columns among the selected feature set (constant, near-constant,
+      likely-ID, or >70% null) with their first issue description; long lists scroll inside the card
+    - Highlights temporal columns selected as features (possible leakage warning)
+    - Shows columns recommended for exclusion that are currently selected (scrollable list)
+    - When the dataset has zero rows, shows a note that per-column checks are unavailable
+      (columns are not flagged as constant until row data exists)
+  Pipeline Review (DataStepContent):
+    - Data Leakage Risk card upgraded from static placeholders to profile-backed signals
+    - Temporal leakage detected when profile.temporalColumns is non-empty
+    - ID / proxy leakage detected when any non-describer feature column has isLikelyId=true
+    - Risk percentage = (detected signal count / total signal count) × 100
+  Strategize context:
+    - When the discover_predictors Celery task runs, the cached dataset profile summary
+      is loaded and injected into the LLM prompt as structured context
+    - Profile summary includes size, health score, excluded column recommendations, temporal
+      signals, and health warnings to help the LLM avoid recommending redundant or problematic predictors

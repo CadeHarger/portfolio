@@ -1,8 +1,26 @@
 description: >
-  Schema for Cade Harger's personal portfolio website. This is a Vite + React + TypeScript
-  single-page app styled with Tailwind CSS v4. All content (resume data) lives in one central
-  file (src/data.ts) so updating the site is just a matter of editing that file. If you are an
-  AI agent making significant structural changes, please update this schema accordingly.
+  Schema for Cade Harger's personal portfolio website. Vite + React + TypeScript SPA styled
+  with Tailwind CSS v4 and client-side routing via react-router-dom (HashRouter for GitHub
+  Pages compatibility). All displayed content lives in src/data.ts. If you are an AI agent
+  making significant structural changes, update this schema accordingly.
+
+routing:
+  description: >
+    Uses HashRouter so all routes are hash-prefixed (e.g. /#/experience). The "/" route
+    renders the home page (MainLayout). Additional routes render standalone page components
+    that each include Navbar and Footer directly.
+  routes:
+    - path: /
+      component: MainLayout (in App.tsx)
+      sections: Hero, Bio, Projects
+    - path: /experience
+      component: ExperiencePage
+      sections: Experience timeline, Education, Skills & Certifications
+    - path: /project/:projectId
+      component: ProjectDetailPage
+      notes: projectId must match an id in the projectDetails array in data.ts
+    - path: /projects/school
+      component: SchoolProjectsPage
 
 index.html:
   type: file
@@ -17,11 +35,13 @@ src:
   children:
     main.tsx:
       type: file
-      description: React DOM entry point. Mounts <App /> into #root.
+      description: React DOM entry point. Wraps <App /> in HashRouter and mounts into #root.
 
     App.tsx:
       type: file
-      description: Root component. Assembles Navbar, Hero, Experience, Projects, Skills, Education, and Footer with divider lines between sections.
+      description: >
+        Defines Routes and MainLayout. MainLayout renders the home page (Navbar, Hero, Bio,
+        Projects, Footer). Routes also cover /experience, /project/:projectId, and /projects/school.
 
     index.css:
       type: file
@@ -30,38 +50,125 @@ src:
     data.ts:
       type: file
       description: >
-        Single source of truth for all portfolio content. Exports: nav (section labels),
-        experience (job history array), projects (project cards array), skills (categorized
-        skill tags object), certs (certifications array), and education (school/degree object).
-        Edit this file to update any displayed content without touching components.
+        Single source of truth for all portfolio content. Exports:
+        nav — labels for the top navbar ['Experience', 'Projects']; 'Experience' is a router Link,
+        others use scrollIntoView.
+        experience — job history array; each entry has company, role, location, period, icon, tags, bullets.
+        projects — project cards array shown on the home page; each entry has id (optional, enables
+        detail-page link), icon, name, subtitle, period, description, tags, highlight.
+        projectDetails — full rich data for each individual project detail page; each entry has id, icon,
+        name, subtitle, period, tagline, body (paragraphs), tags, images, links, optional pdfUrl and features.
+        schoolProjects — academic projects for the school projects page; each has name, course, year,
+        description, tags, optional note.
+        skills — categorized skill tags object.
+        certs — certifications array.
+        education — school/degree object with icon field (Trinity logo).
+        getYearsOfExperience() — utility that computes years elapsed since Jul 14 2025, rounded up to
+        the nearest 0.5 (e.g. 0.92 → 1.0, 1.1 → 1.5). Used in Hero and ExperiencePage.
+        formatYOE(years) — formats a YOE number as "1.0 yr" / "1.5 yrs" etc. Used alongside
+        getYearsOfExperience() in Hero and ExperiencePage.
+
+    pages:
+      type: folder
+      description: Route-level page components. Each renders Navbar and Footer directly.
+      children:
+        ExperiencePage.tsx:
+          type: file
+          description: >
+            Standalone /experience page. Shows a timeline of all experience entries (with company
+            logos, tech tags, and bullet points), followed by Education and Skills/Certifications
+            sections. Imports experience, education, skills, certs, getYearsOfExperience, and
+            formatYOE from data.ts. Header displays a YOE pill badge below the subtitle.
+
+        ProjectDetailPage.tsx:
+          type: file
+          description: >
+            Individual project detail page at /project/:projectId. Reads projectId from URL params,
+            looks up the matching entry in projectDetails, and renders a hero header (icon + name +
+            subtitle + period), tag pills, external link buttons, body paragraphs, optional features
+            list (Scepter), image gallery, and optional PDF download button (PoliticalBias).
+
+        SchoolProjectsPage.tsx:
+          type: file
+          description: Combined school projects listing page. Renders schoolProjects as a 2-col responsive card grid.
 
     components:
       type: folder
-      description: One file per page section. All components are presentational and pull data from data.ts.
+      description: Presentational components used in MainLayout and/or page components.
       children:
         Navbar.tsx:
           type: file
-          description: Fixed top navbar with backdrop blur. Links to each section by id anchor. Includes a mailto contact button.
+          description: >
+            Fixed top navbar with backdrop blur. On detail routes (/project/*, /projects/school,
+            /experience), shows "← Back to Portfolio" Link instead of nav items. On the home page,
+            'Experience' renders as a router Link to /experience; other nav items use scrollIntoView.
+            Always shows a mailto Contact button.
 
         Hero.tsx:
           type: file
-          description: Full-screen landing section with ambient glow divs, name/title headline, short bio, CTA button to #experience, and social icon links (GitHub, LinkedIn, email).
+          description: >
+            Full-screen landing section. Two-column flex layout on lg+ screens: left column has
+            name/title headline, short bio, "View Experience" CTA, social icon links, and a location +
+            YOE badge row (uses getYearsOfExperience/formatYOE from data.ts); right column renders
+            WordCloud3D. Single column on smaller screens (word cloud hidden).
 
-        Experience.tsx:
+        WordCloud3D.tsx:
           type: file
-          description: Renders the experience array as a vertical stack of cards. Each card shows company, role, period, location, and a bullet list.
+          description: >
+            Animated 3D word cloud for the Hero right column. 24 resume keywords distributed on a
+            sphere via the Fibonacci lattice, projected to 2D per-frame with rotation driven by
+            mouse position (lerped yaw/pitch) and sphere radius expanding on scroll. No external
+            dependencies — pure rAF loop with absolutely-positioned spans, depth-based opacity and
+            font-size, and a slow automatic idle rotation.
+
+        GeoDecor.tsx:
+          type: file
+          description: >
+            Reusable GD-inspired decoration helpers: floating particles, scan lines, corner brackets,
+            section dividers, edge rails, side ornaments, portal rings, beams, varied card glints,
+            and page-level backdrops. Components are pointer-events-none overlays for relative containers.
+
+        Bio.tsx:
+          type: file
+          description: >
+            About section on the home page. Shows ProfilePic.jpg (from public/) in a rounded card
+            alongside a short written bio with inline links to project detail pages and two CTA
+            buttons (Experience & Skills, View Projects).
 
         Projects.tsx:
           type: file
-          description: Renders the projects array as a 3-column responsive grid. Each card shows name, subtitle, description, tech tags, and a highlight line.
+          description: >
+            Renders the projects array as a responsive grid. Each card shows the icon (via
+            ProjectIcon), project name, period (top-right monospace), subtitle, description, and
+            tech tags. Cards with an id field are wrapped in a Link to /project/:id and show
+            "View project →". Includes a "See also: School Projects →" link below the grid.
 
-        Skills.tsx:
+        ProjectIcon.tsx:
           type: file
-          description: Renders the skills object as a 2-column grid of tag-cloud cards (one per category) plus a certifications row below.
+          description: >
+            Reusable icon component. Accepts icon (string) and size ('sm'|'md'|'lg'). If icon is
+            'crown', renders a white rounded-xl with a blue lucide Crown SVG inside. Otherwise
+            renders an <img> with object-cover. Used in Projects, ProjectDetailPage, and ExperiencePage.
 
         Education.tsx:
           type: file
-          description: Single card for the education object showing school, degree, period, location, and involvement list.
+          description: >
+            Single card for the education object showing the Trinity logo (via education.icon),
+            school, degree, period, location, and involvement list. Used on the home page
+            (currently removed from MainLayout; education is shown on ExperiencePage instead).
+
+        Skills.tsx:
+          type: file
+          description: >
+            Renders the skills object as a 2-column grid of tag-cloud cards plus a certifications
+            row. No longer used in MainLayout; kept for potential reuse. Skills and certs are
+            now rendered directly inside ExperiencePage.
+
+        Experience.tsx:
+          type: file
+          description: >
+            Legacy component — renders experience cards. No longer used in MainLayout (experience
+            moved to ExperiencePage). Kept for potential reuse.
 
         Footer.tsx:
           type: file
@@ -69,7 +176,28 @@ src:
 
 public:
   type: folder
-  description: Static assets served at root. Currently only contains the default Vite favicon.
+  description: >
+    Static assets served at root. Key subdirectories:
+    public/projects/[name]/ — images and PDFs for each project detail page (scepter, cathode,
+    glassbrain, kalshibot, politicalbias).
+    public/icons/ — company/project logos (DeutscheBank.png, allosense_logo.jpeg, Kalshi.png,
+    Politics.png, Trinity.webp).
+    public/ProfilePic.jpg — profile photo used in the Bio component.
+
+cade:
+  type: folder
+  description: Source folder for personal assets. Contains ProfilePic.jpg (copied to public/ during setup).
+
+icons:
+  type: folder
+  description: Source folder for icon assets. Contents are copied to public/icons/ during setup.
+
+projects:
+  type: folder
+  description: >
+    Source content for each project. Each subfolder has an Overview.md describing the project
+    and a files/ subfolder with images/PDFs that are copied to public/projects/[name]/ for
+    serving. ProjectOrder.md defines the display order (most recent first).
 
 Personal_Projects:
   type: folder
@@ -77,4 +205,8 @@ Personal_Projects:
 
 School_Projects:
   type: folder
-  description: Legacy folder from the original git repo. Contains old academic project files; not part of the website.
+  description: >
+    Source folder for school project code. Contains five subdirectories:
+    Pet-Store-Website-CSCI-3321, play-tasks-charger-trinity, WebApps Final Project,
+    sunoco_project, AI Final GAN Stock Prediction. Not directly served; used as reference
+    for the school projects page content in data.ts.

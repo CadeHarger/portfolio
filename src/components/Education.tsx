@@ -11,9 +11,18 @@ export default function Education() {
 
         <div className="rounded-xl border border-white/5 bg-white/[0.02] p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-6">
-            <div>
-              <h3 className="text-white font-semibold text-xl">{education.school}</h3>
-              <p className="text-blue-400 text-sm mt-1">{education.degree}</p>
+            <div className="flex items-start gap-4">
+              {education.icon && (
+                <img
+                  src={education.icon}
+                  alt={education.school}
+                  className="w-11 h-11 rounded-xl object-cover shrink-0 shadow-sm"
+                />
+              )}
+              <div>
+                <h3 className="text-white font-semibold text-xl">{education.school}</h3>
+                <p className="text-blue-400 text-sm mt-1">{education.degree}</p>
+              </div>
             </div>
             <div className="text-right shrink-0">
               <span className="inline-block text-xs font-mono text-slate-400 bg-white/5 px-3 py-1 rounded-full">

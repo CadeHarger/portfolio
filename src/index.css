@@ -9,3 +9,194 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
+
+/* GD-inspired decorative animations */
+
+/* Particles float slowly upward and fade in/out */
+@keyframes geo-float {
+  0%   { transform: translateY(0px);   opacity: 0; }
+  12%  {                               opacity: 1; }
+  80%  {                               opacity: 0.75; }
+  100% { transform: translateY(-52px); opacity: 0; }
+}
+
+/* Scan line sweeps from top to bottom of viewport */
+@keyframes scan-sweep {
+  from { transform: translateY(-1px); }
+  to   { transform: translateY(100vh); }
+}
+
+/* Corner brackets breathe gently */
+@keyframes bracket-pulse {
+  0%, 100% { opacity: 0.14; }
+  50%      { opacity: 0.32; }
+}
+
+/* Vertical accent bar glows */
+@keyframes vline-glow {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.65; }
+}
+
+/* Diamond spin for divider center piece */
+@keyframes diamond-spin {
+  from { transform: rotate(45deg); }
+  to   { transform: rotate(405deg); }
+}
+
+@keyframes beam-breathe {
+  0%, 100% {
+    opacity: 0.08;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 0.34;
+    filter: blur(0.25px);
+  }
+}
+
+@keyframes portal-turn {
+  from { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.03); }
+  to { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes rail-pulse {
+  0%, 100% {
+    opacity: 0.16;
+    box-shadow: 0 0 0 rgba(59,130,246,0);
+  }
+  50% {
+    opacity: 0.48;
+    box-shadow: 0 0 18px rgba(59,130,246,0.22);
+  }
+}
+
+@keyframes side-mark-pulse {
+  0%, 100% {
+    opacity: 0.16;
+    transform: scaleX(0.72);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scaleX(1);
+  }
+}
+
+@layer utilities {
+  .gd-circuit-grid {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.032) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.032) 1px, transparent 1px);
+    background-size: 84px 84px;
+    mask-image: radial-gradient(circle at 50% 24%, black 0%, transparent 72%);
+  }
+
+  .gd-beam {
+    animation: beam-breathe 7s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .gd-beam-blue {
+    background: linear-gradient(to right, transparent, rgba(59,130,246,0.55), rgba(255,255,255,0.26), transparent);
+  }
+
+  .gd-beam-white {
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.28), transparent);
+  }
+
+  .gd-rail {
+    background: linear-gradient(to bottom, transparent, rgba(59,130,246,0.45), rgba(255,255,255,0.16), transparent);
+    animation: rail-pulse 6s ease-in-out infinite;
+  }
+
+  .gd-side-rail {
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), rgba(59,130,246,0.32), rgba(255,255,255,0.08), transparent);
+    box-shadow: 0 0 18px rgba(59,130,246,0.06);
+  }
+
+  .gd-side-node {
+    width: 7px;
+    height: 7px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(59,130,246,0.12);
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px rgba(59,130,246,0.12);
+  }
+
+  .gd-step-mark {
+    background: linear-gradient(to right, rgba(59,130,246,0.38), rgba(255,255,255,0.16), transparent);
+    transform-origin: left center;
+    animation: side-mark-pulse 5.5s ease-in-out infinite;
+  }
+
+  .gd-step-mark.right-0 {
+    background: linear-gradient(to left, rgba(59,130,246,0.38), rgba(255,255,255,0.16), transparent);
+    transform-origin: right center;
+  }
+
+  .gd-portal {
+    border: 1px solid rgba(59,130,246,0.22);
+    background:
+      conic-gradient(from 90deg, transparent 0deg, rgba(59,130,246,0.22) 50deg, transparent 88deg, transparent 180deg, rgba(255,255,255,0.18) 230deg, transparent 270deg),
+      radial-gradient(circle, transparent 56%, rgba(59,130,246,0.12) 57%, transparent 68%);
+    box-shadow: 0 0 28px rgba(59,130,246,0.08);
+    animation: portal-turn 22s linear infinite;
+  }
+
+  .gd-card-sheen {
+    background:
+      linear-gradient(115deg, transparent 0%, transparent 36%, rgba(255,255,255,0.08) 47%, transparent 58%, transparent 100%),
+      radial-gradient(circle at 85% 12%, rgba(59,130,246,0.11), transparent 28%);
+  }
+
+  .gd-card-sheen-offset {
+    background:
+      linear-gradient(72deg, transparent 0%, transparent 48%, rgba(59,130,246,0.095) 58%, transparent 70%, transparent 100%),
+      radial-gradient(circle at 18% 18%, rgba(255,255,255,0.07), transparent 24%),
+      linear-gradient(to bottom, rgba(255,255,255,0.025), transparent 42%);
+  }
+
+  .gd-card-sheen-orbit {
+    background:
+      radial-gradient(circle at 82% 78%, rgba(59,130,246,0.12), transparent 26%),
+      conic-gradient(from 30deg at 78% 22%, transparent 0deg, rgba(255,255,255,0.06) 42deg, transparent 74deg),
+      linear-gradient(145deg, transparent 0%, transparent 58%, rgba(255,255,255,0.045) 72%, transparent 100%);
+  }
+
+  .gd-platform-card {
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  .gd-platform-card::after {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    right: 1.5rem;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(59,130,246,0.26), transparent);
+    opacity: 0;
+    transition: opacity 350ms ease;
+  }
+
+  .gd-platform-card:hover::after {
+    opacity: 1;
+  }
+
+  .gd-nav-glow {
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 0 30px rgba(59,130,246,0.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
