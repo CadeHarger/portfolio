@@ -2,7 +2,7 @@
 
 My personal portfolio site, built with Vite + React + TypeScript and styled with Tailwind CSS v4.
 
-Live at: **[https://cadeharger.github.io](https://cadeharger.github.io)**
+Live at: **[https://cadeharger.github.io/portfolio/](https://cadeharger.github.io/portfolio/)**
 
 ## Stack
 
