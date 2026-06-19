@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+
+const b = import.meta.env.BASE_URL;
 import { CardGlow, CornerBrackets, PortalRing, SideOrnaments } from './GeoDecor';
 
 export default function Bio() {
@@ -13,14 +15,14 @@ export default function Bio() {
           <div className="shrink-0 relative group">
             {/* Pixelated speech bubble */}
             <img
-              src="/pixel-speech-bubble.png"
+              src={b + 'pixel-speech-bubble.png'}
               alt="Hi there!"
               className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-100 pointer-events-none select-none z-10"
               style={{ width: 160, bottom: '70%', left: '55%', imageRendering: 'pixelated' }}
             />
 
             <img
-              src="/ProfilePic.jpg"
+              src={b + 'ProfilePic.jpg'}
               alt="Cade Harger"
               className="relative w-40 h-40 md:w-52 md:h-52 rounded-2xl object-cover border border-white/10 shadow-xl shadow-blue-950/20"
             />

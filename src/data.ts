@@ -1,3 +1,6 @@
+/** Prepend Vite's base URL so asset paths work under any subpath (e.g. /portfolio/). */
+const p = (s: string) => import.meta.env.BASE_URL + s.slice(1);
+
 export const nav = ['Experience', 'Projects'];
 
 /** Returns years coding rounded up to the nearest whole year, counted from Feb 17 2014. */
@@ -39,7 +42,7 @@ export const experience: ExperienceItem[] = [
     role: 'Software Engineer — Instant Payments, Risk & Control Automation',
     location: 'Cary, NC',
     period: 'Jul 2025 – Present',
-    icon: '/icons/DeutscheBank.png',
+    icon: p('/icons/DeutscheBank.png'),
     tags: ['Java', 'Spring Boot', 'Hazelcast Jet', 'GCP', 'Terraform', 'Python', 'LangGraph', 'Exadata', 'Graph RAG', 'SQL', 'CI/CD', 'MongoDB', 'Microservices'],
     bullets: [
       'Built low-latency payment flows capable of processing >$1B USD worth of currency daily using Java Spring Boot, Hazelcast Jet, and Exadata microservice architecture',
@@ -55,7 +58,7 @@ export const experience: ExperienceItem[] = [
     role: 'Full-Stack Engineer Intern',
     location: 'San Antonio, TX',
     period: 'Jun 2024 – Aug 2024',
-    icon: '/icons/allosense_logo.jpeg',
+    icon: p('/icons/allosense_logo.jpeg'),
     tags: ['Python', 'Flask', 'React', 'Electron'],
     bullets: [
       'Designed a Flask-React-Electron desktop app for EV battery production diagnosis and unit test visualization',
@@ -68,7 +71,7 @@ export const experience: ExperienceItem[] = [
     role: 'Founder',
     location: 'San Antonio, TX',
     period: 'Jan 2023 – Oct 2023',
-    icon: '/projects/glassbrain/Logo.png',
+    icon: p('/projects/glassbrain/Logo.png'),
     tags: ['React', 'Redux', 'React Flow', 'Python', 'Flask', 'PyTorch', 'Electron'],
     bullets: [
       'Invented a visual programming language and desktop IDE for neural network algorithms',
@@ -92,7 +95,7 @@ export const projects = [
   },
   {
     id: 'politicalbias',
-    icon: '/icons/Politics.png',
+    icon: p('/icons/Politics.png'),
     name: 'NLP Research',
     subtitle: 'Machine Learning Research',
     period: 'Feb 2026 – Mar 2026',
@@ -103,7 +106,7 @@ export const projects = [
   },
   {
     id: 'cathode',
-    icon: '/projects/cathode/IconLogo.png',
+    icon: p('/projects/cathode/IconLogo.png'),
     name: 'Cathode',
     subtitle: 'Music-Finding AI',
     period: 'Aug 2025 – Sep 2025',
@@ -114,7 +117,7 @@ export const projects = [
   },
   {
     id: 'kalshibot',
-    icon: '/icons/Kalshi.png',
+    icon: p('/icons/Kalshi.png'),
     name: 'KalshiBot',
     subtitle: 'Prediction Market Trading Bot',
     period: 'Jan 2025 – Jan 2026',
@@ -125,7 +128,7 @@ export const projects = [
   },
   {
     id: 'glassbrain',
-    icon: '/projects/glassbrain/Logo.png',
+    icon: p('/projects/glassbrain/Logo.png'),
     name: 'GlassBrain',
     subtitle: 'Visual Neural Network IDE',
     period: 'Mar 2023 – Oct 2023',
@@ -214,12 +217,12 @@ export const projectDetails: ProjectDetail[] = [
     ],
     tags: ['Python', 'AI Agents', 'AutoML', 'LLM', 'React', 'FastAPI', 'PostgreSQL', 'Celery'],
     images: [
-      { src: '/projects/scepter/admissions_dataset.png', caption: 'Trinity admissions dataset loaded into Scepter' },
-      { src: '/projects/scepter/model_training.png', caption: 'Model training configuration UI' },
-      { src: '/projects/scepter/column_definition.png', caption: 'Natural-language column definition form' },
-      { src: '/projects/scepter/strategize.png', caption: 'AI-generated predictor strategy plan' },
-      { src: '/projects/scepter/training_pipeline.png', caption: '(Old) Training pipeline for natural-language text columns (modeling is more complex now)' },
-      { src: '/projects/scepter/row_discovery.png', caption: 'Agentic row discovery from the web' },
+      { src: p('/projects/scepter/admissions_dataset.png'), caption: 'Trinity admissions dataset loaded into Scepter' },
+      { src: p('/projects/scepter/model_training.png'), caption: 'Model training configuration UI' },
+      { src: p('/projects/scepter/column_definition.png'), caption: 'Natural-language column definition form' },
+      { src: p('/projects/scepter/strategize.png'), caption: 'AI-generated predictor strategy plan' },
+      { src: p('/projects/scepter/training_pipeline.png'), caption: '(Old) Training pipeline for natural-language text columns (modeling is more complex now)' },
+      { src: p('/projects/scepter/row_discovery.png'), caption: 'Agentic row discovery from the web' },
     ],
     links: [],
     features: [
@@ -271,7 +274,7 @@ export const projectDetails: ProjectDetail[] = [
   },
   {
     id: 'cathode',
-    icon: '/projects/cathode/IconLogo.png',
+    icon: p('/projects/cathode/IconLogo.png'),
     name: 'Cathode',
     subtitle: 'Music-Finding AI',
     period: 'Aug 2025 – Sep 2025',
@@ -287,11 +290,11 @@ export const projectDetails: ProjectDetail[] = [
     ],
     tags: ['RAG', 'Python', 'React', 'FastAPI', 'FAISS', 'SentenceTransformers', 'Spotipy', 'Gemini', 'GCP'],
     images: [
-      { src: '/projects/cathode/HomePage.png', caption: 'Cathode landing page' },
-      { src: '/projects/cathode/Step1InputPrompt.png', caption: 'Step 1 — describe your life experience' },
-      { src: '/projects/cathode/Step2Filters.png', caption: 'Step 2 — genre and exploration filters' },
-      { src: '/projects/cathode/Step3Loading.png', caption: 'Generating the playlist…' },
-      { src: '/projects/cathode/ResultsPage.png', caption: 'Results — your cathartic playlist' },
+      { src: p('/projects/cathode/HomePage.png'), caption: 'Cathode landing page' },
+      { src: p('/projects/cathode/Step1InputPrompt.png'), caption: 'Step 1 — describe your life experience' },
+      { src: p('/projects/cathode/Step2Filters.png'), caption: 'Step 2 — genre and exploration filters' },
+      { src: p('/projects/cathode/Step3Loading.png'), caption: 'Generating the playlist…' },
+      { src: p('/projects/cathode/ResultsPage.png'), caption: 'Results — your cathartic playlist' },
     ],
     links: [
       { label: 'GitHub', url: 'https://github.com/CadeHarger/Cathode' },
@@ -299,7 +302,7 @@ export const projectDetails: ProjectDetail[] = [
   },
   {
     id: 'glassbrain',
-    icon: '/projects/glassbrain/Logo.png',
+    icon: p('/projects/glassbrain/Logo.png'),
     name: 'GlassBrain',
     subtitle: 'Visual Neural Network IDE',
     period: 'Mar 2023 – Oct 2023',
@@ -317,8 +320,8 @@ export const projectDetails: ProjectDetail[] = [
     ],
     tags: ['React', 'Redux', 'React Flow', 'Python', 'Flask', 'PyTorch', 'Electron', 'JavaScript'],
     images: [
-      { src: '/projects/glassbrain/Logo.png', caption: 'GlassBrain logo' },
-      { src: '/projects/glassbrain/LSTM.png', caption: 'LSTM architecture rendered in the GlassBrain visual editor' },
+      { src: p('/projects/glassbrain/Logo.png'), caption: 'GlassBrain logo' },
+      { src: p('/projects/glassbrain/LSTM.png'), caption: 'LSTM architecture rendered in the GlassBrain visual editor' },
     ],
     links: [
       { label: 'GitHub', url: 'https://github.com/glassbrainai/GlassBrain' },
@@ -328,7 +331,7 @@ export const projectDetails: ProjectDetail[] = [
   },
   {
     id: 'kalshibot',
-    icon: '/icons/Kalshi.png',
+    icon: p('/icons/Kalshi.png'),
     name: 'KalshiBot',
     subtitle: 'Prediction Market Trading Bot',
     period: 'Jan 2025 – Jan 2026',
@@ -345,14 +348,14 @@ export const projectDetails: ProjectDetail[] = [
     ],
     tags: ['Python', 'Web Scraping', 'Machine Learning', 'Prediction Markets', 'Kalshi', 'Exa'],
     images: [
-      { src: '/projects/kalshibot/profit.png', caption: 'Backtested portfolio value (orange) vs cash (blue), Jan–Nov 2025. Edge diminishes mid-year — likely front-run.' },
-      { src: '/projects/kalshibot/training_algorithm.png', caption: 'Data pipeline: from Exa search results to RT score predictions' },
+      { src: p('/projects/kalshibot/profit.png'), caption: 'Backtested portfolio value (orange) vs cash (blue), Jan–Nov 2025. Edge diminishes mid-year — likely front-run.' },
+      { src: p('/projects/kalshibot/training_algorithm.png'), caption: 'Data pipeline: from Exa search results to RT score predictions' },
     ],
     links: [],
   },
   {
     id: 'politicalbias',
-    icon: '/icons/Politics.png',
+    icon: p('/icons/Politics.png'),
     name: 'Political Bias Research',
     subtitle: 'LLM Forecasting Under Biased Media',
     period: 'Feb 2026 – Mar 2026',
@@ -368,12 +371,12 @@ export const projectDetails: ProjectDetail[] = [
     tags: ['Python', 'Web Scraping', 'Statistics', 'Research', 'Prediction Markets'],
     images: [
       {
-        src: '/projects/politicalbias/Figure_8.png',
+        src: p('/projects/politicalbias/Figure_8.png'),
         caption: 'Figure 8 — Base-rate-normalized δnorm per news site. Positive values indicate a site pushes predictions toward the correct partisan outcome.',
       },
     ],
     links: [],
-    pdfUrl: '/projects/politicalbias/Studying_LLM_Based_Political_Forecasting_under_Biased_Media_Intake.pdf',
+    pdfUrl: p('/projects/politicalbias/Studying_LLM_Based_Political_Forecasting_under_Biased_Media_Intake.pdf'),
   },
 ];
 
@@ -433,7 +436,7 @@ export const schoolProjects: SchoolProject[] = [
 
 export const education = {
   school: 'Trinity University',
-  icon: '/icons/Trinity.webp',
+    icon: p('/icons/Trinity.webp'),
   location: 'San Antonio, TX',
   degree: 'B.S. Computer Science, Minor in Data Science — Cum Laude',
   period: 'Aug 2021 – May 2025',
